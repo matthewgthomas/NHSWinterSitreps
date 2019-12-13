@@ -10,5 +10,10 @@ URL: https://github.com/matthewgthomas/NHSWinterSitreps
 Encoding: UTF-8
 LazyData: true
 Imports:
-  readr
+  readr,
+  readxl,
+  janitor,
+  dplyr,
+  tidyr,
+  vctrs
 RoxygenNote: 7.0.1
