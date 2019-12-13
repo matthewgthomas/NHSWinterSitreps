@@ -15,5 +15,6 @@ Imports:
   janitor,
   dplyr,
   tidyr,
-  vctrs
+  vctrs,
+  tibble
 RoxygenNote: 7.0.1

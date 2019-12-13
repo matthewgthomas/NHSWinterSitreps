@@ -1,6 +1,4 @@
-#' Load timeseries of winter situation reports from 2018-19
-#'
-#' Downloads and cleans the "Winter SitRep: Acute Time series 3 December 2018 to 3 March 2019" data from https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/winter-daily-sitrep-2018-19-data/
+#' Load timeseries of winter situation reports in its most up-to-date format (from 2017-18 to present)
 #'
 #' The returned tibble contains:
 #' - A&E diverts
@@ -11,9 +9,12 @@
 #' - Beds closed due to diarrhoea, vomiting, norovirus
 #'
 #' @param sitrep_url URL of the timeseries file
+#' @param closures_sheet_name Name of the 'A&E Closures' worksheet (it can differ from winter to winter)
+#' @param diverts_sheet_name Name of the 'A&E Diverts' worksheet (it can differ from winter to winter)
 #'
-#' @export
-load_sitreps_1819 = function(sitrep_url = "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2019/03/Winter-data-timeseries-20190307.xlsx") {
+load_sitreps_generic = function(sitrep_url,
+                                closures_sheet_name = "A&E Closures",
+                                diverts_sheet_name = "A&E Diverts") {
   ##
   ## load sitrep timeseries
   ##
@@ -26,8 +27,8 @@ load_sitreps_1819 = function(sitrep_url = "https://www.england.nhs.uk/statistics
 
   # load sitrep data
   sitrep_beds      = readxl::read_excel(tmp_sitrep, sheet = "G&A beds", skip = 14, .name_repair = ~ my_repair_names)        # general and acute beds
-  sitrep_closures  = readxl::read_excel(tmp_sitrep, sheet = "A&E Closures", skip = 14, .name_repair = ~ my_repair_names)
-  sitrep_diverts   = readxl::read_excel(tmp_sitrep, sheet = "A&E Diverts", skip = 14, .name_repair = ~ my_repair_names)
+  sitrep_closures  = readxl::read_excel(tmp_sitrep, sheet = closures_sheet_name, skip = 14, .name_repair = ~ my_repair_names)
+  sitrep_diverts   = readxl::read_excel(tmp_sitrep, sheet = diverts_sheet_name, skip = 14, .name_repair = ~ my_repair_names)
   sitrep_beds_long = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 14, .name_repair = ~ my_repair_names)
   sitrep_beds_noro = readxl::read_excel(tmp_sitrep, sheet = "D&V, Norovirus", skip = 14, .name_repair = ~ my_repair_names)
   sitrep_ambo      = readxl::read_excel(tmp_sitrep, sheet = "Ambulance Arrivals and Delays", skip = 14, .name_repair = ~ my_repair_names)
@@ -253,7 +254,7 @@ load_sitreps_1819 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   sitrep_beds_long_7 = na.omit(sitrep_beds_long_7)
   sitrep_beds_long_21 = na.omit(sitrep_beds_long_21)
 
-  sitrep_1819 = sitrep_ambo30 %>% dplyr::rename(Delays30 = Delays) %>%
+  sitrep = sitrep_ambo30 %>% dplyr::rename(Delays30 = Delays) %>%
     dplyr::left_join(sitrep_ambo60           %>% dplyr::select(Code, Date, Delays60 = Delays),                                      by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds             %>% dplyr::select(Code, Date, `Occupancy rate`),                                       by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed      %>% dplyr::select(Code, Date, `No. beds closed due to norovirus etc.`),                by = c("Code", "Date")) %>%
@@ -264,11 +265,11 @@ load_sitreps_1819 = function(sitrep_url = "https://www.england.nhs.uk/statistics
     dplyr::left_join(sitrep_diverts          %>% dplyr::select(Code, Date, Diverts),                                                by = c("Code", "Date"))
 
   # re-order columns
-  sitrep_1819 = sitrep_1819 %>% dplyr::select(Code, Name, Date, dplyr::everything())
+  sitrep = sitrep %>% dplyr::select(Code, Name, Date, dplyr::everything())
 
   # remove temp file
   unlink(tmp_sitrep)
 
   # return sitrep
-  sitrep_1819
+  sitrep
 }
