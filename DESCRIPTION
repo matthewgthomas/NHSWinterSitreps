@@ -1,11 +1,14 @@
 Package: NHSWinterSitreps
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Work with NHS England's Winter Pressures Situation Reports
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Authors@R: person("Matthew", "Gwynfryn", "Thomas", email = "matthewgthomas@gmail.com", role = c("aut", "cre"),
+                  comment = c(ORCID = "0000-0003-2288-1104"))
+Description: The 'NHSWinterSitreps' R package provides functions for downloading and cleaning NHS England's winter situation reports <https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/>
+License: GPL-3
+URL: https://github.com/matthewgthomas/NHSWinterSitreps
 Encoding: UTF-8
 LazyData: true
+Imports:
+  readr
+RoxygenNote: 7.0.1
