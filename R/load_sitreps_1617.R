@@ -64,7 +64,7 @@ load_sitreps_1617 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   ##
   sitrep_beds = sitrep_beds %>%
     dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
-    dplyr::select(Code, Name, starts_with("Total beds")) %>%   # keep only bed occupancy rates
+    dplyr::select(Code, Name, dplyr::starts_with("Total beds")) %>%   # keep only bed occupancy rates
     janitor::remove_empty("rows")
 
   # calculate bed occupancy rates for each pair of "Total beds available/occupied" columns

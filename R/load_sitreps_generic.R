@@ -76,7 +76,7 @@ load_sitreps_generic = function(sitrep_url,
   ##
   sitrep_beds = sitrep_beds %>%
     dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
-    dplyr::select(Code, Name, starts_with("Occupancy rate")) %>%   # keep only bed occupancy rates
+    dplyr::select(Code, Name, dplyr::starts_with("Occupancy rate")) %>%   # keep only bed occupancy rates
     janitor::remove_empty("rows")
 
   # convert to long format
