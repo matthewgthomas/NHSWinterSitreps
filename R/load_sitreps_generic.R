@@ -12,6 +12,8 @@
 #' @param closures_sheet_name Name of the 'A&E Closures' worksheet (it can differ from winter to winter)
 #' @param diverts_sheet_name Name of the 'A&E Diverts' worksheet (it can differ from winter to winter)
 #'
+#' @importFrom magrittr "%>%"
+#'
 load_sitreps_generic = function(sitrep_url,
                                 closures_sheet_name = "A&E Closures",
                                 diverts_sheet_name = "A&E Diverts") {

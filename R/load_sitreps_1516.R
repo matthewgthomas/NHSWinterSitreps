@@ -1,6 +1,6 @@
-#' Load timeseries of winter situation reports from 2016-17
+#' Load timeseries of winter situation reports from 2015-16
 #'
-#' Downloads and cleans the "Winter SitRep Part A: Acute Time Series 1 December 2016 to 12 March 2017" data from https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/winter-daily-sitrep-2016-17-data/
+#' Downloads and cleans the "Winter SitRep Part A: Acute Time Series 30 November 2015 to 28 February 2016" data from https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/winter-daily-sitrep-2015-16-data/
 #'
 #' The returned tibble contains:
 #' - A&E diverts
@@ -12,7 +12,7 @@
 #'
 #' @importFrom magrittr "%>%"
 #' @export
-load_sitreps_1617 = function(sitrep_url = "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2016/12/DailySR-Web-file-Time-Series-18.xlsx") {
+load_sitreps_1516 = function(sitrep_url = "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2015/12/DailySR-Timeseries-WE-28.02.16.xlsx") {
   ##
   ## load sitrep timeseries
   ##
