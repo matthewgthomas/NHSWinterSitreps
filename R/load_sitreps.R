@@ -1,5 +1,5 @@
 #' Load timeseries of winter situation reports from the specified winter
-#' @param winter The winter you want to fetch data for (can be "2019-20", "2018-19" or "2017-18")
+#' @param winter The winter you want to fetch data for (can be "2019-20", "2018-19", "2017-18", "2016-17")
 #' @example sitrep_1819 = load_sitreps("2018-19")
 #' @export
 load_sitreps = function(winter) {
