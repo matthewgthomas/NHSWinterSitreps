@@ -5,13 +5,13 @@
 #' The returned tibble contains:
 #' - A&E diverts
 #' - A&E closures
+#' - A&E attendance
 #' - Bed occupancy
 #' - Beds closed due to diarrhoea, vomiting, norovirus
 #'
 #' @param sitrep_url URL of the timeseries file
 #'
 #' @importFrom magrittr "%>%"
-#' @export
 load_sitreps_1516 = function(sitrep_url = "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2015/12/DailySR-Timeseries-WE-28.02.16.xlsx") {
   ##
   ## load sitrep timeseries
@@ -29,6 +29,7 @@ load_sitreps_1516 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   sitrep_diverts   = readxl::read_excel(tmp_sitrep, sheet = "A&E diverts", skip = 14, .name_repair = ~ my_repair_names)
   sitrep_critical  = readxl::read_excel(tmp_sitrep, sheet = "Adult critical care", skip = 14, .name_repair = ~ my_repair_names)
   sitrep_beds_noro = readxl::read_excel(tmp_sitrep, sheet = "D&V, Norovirus",  skip = 14, .name_repair = ~ my_repair_names)
+  sitrep_ae        = readxl::read_excel(tmp_sitrep, sheet = "A&E attendances",  skip = 14, .name_repair = ~ my_repair_names)
 
   ##
   ## sitrep date range
@@ -41,8 +42,16 @@ load_sitreps_1516 = function(sitrep_url = "https://www.england.nhs.uk/statistics
     dplyr::as_tibble() %>%
     dplyr::rename(Date_txt = V1)
 
-  # convert to Date format
-  sitrep_dates$Date = janitor::excel_numeric_to_date(as.numeric(sitrep_dates$Date_txt))
+  # some dates are ranges not single days - e.g. 11-13-Dec-15 - choose the most recent day in the range
+  sitrep_dates$Date_txt = stringr::str_replace(sitrep_dates$Date_txt, "([0-9]+)-[0-9]+", "\\1")
+  sitrep_dates$Date_txt = ifelse(sitrep_dates$Date_txt == "31-Dec-15-Jan-16", "31-Dec-15", sitrep_dates$Date_txt)
+
+  # convert to Date format - need to do this row by row using sapply()
+  sitrep_dates$Date = as.Date( sapply(1:nrow(sitrep_dates), function(i)
+    ifelse( Hmisc::all.is.numeric(sitrep_dates$Date_txt[i]),   # check if this row contains a number or a string
+            janitor::excel_numeric_to_date(as.numeric(sitrep_dates$Date_txt[i])),  # if a number, use janitor::excel...() to convert it
+            as.Date(sitrep_dates$Date_txt[i], format = "%d-%b-%y") )      # if a string, convert directly to Date
+  ), origin = "1970-01-01" )
 
   sitrep_dates$Date_txt = NULL  # don't need this column anymore
 
@@ -64,7 +73,7 @@ load_sitreps_1516 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   ##
   sitrep_beds = sitrep_beds %>%
     dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
-    dplyr::select(Code, Name, starts_with("Total beds")) %>%   # keep only bed occupancy rates
+    dplyr::select(Code, Name, dplyr::starts_with("Total beds")) %>%   # keep only bed occupancy rates
     janitor::remove_empty("rows")
 
   # calculate bed occupancy rates for each pair of "Total beds available/occupied" columns
@@ -140,20 +149,60 @@ load_sitreps_1516 = function(sitrep_url = "https://www.england.nhs.uk/statistics
                   Date = as.POSIXct(Date))
 
 
+  #########################################################################################
+  ## A&E attendances
+  ##
+  sitrep_ae = sitrep_ae %>%
+    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::select(-`Regional Team`, -V__1) %>%
+    janitor::remove_empty(c("rows", "cols"))
+
+  # convert to long format
+  sitrep_ae = sitrep_ae %>%
+    tidyr::gather(Date_txt, Attendances, -Code, -Name)
+
+  # some dates are ranges not single days - e.g. 11-13-Dec-15 - choose the most recent day in the range
+  sitrep_ae$Date_txt = stringr::str_replace(sitrep_ae$Date_txt, "([0-9]+)-[0-9]+", "\\1")
+  sitrep_ae$Date_txt = ifelse(sitrep_ae$Date_txt == "31-Dec-15-Jan-16", "31-Dec-15", sitrep_ae$Date_txt)
+
+  # convert to Date format - need to do this row by row using sapply()
+  sitrep_ae$Date = as.Date( sapply(1:nrow(sitrep_ae), function(i)
+    ifelse( Hmisc::all.is.numeric(sitrep_ae$Date_txt[i]),   # check if this row contains a number or a string
+            janitor::excel_numeric_to_date(as.numeric(sitrep_ae$Date_txt[i])),  # if a number, use janitor::excel...() to convert it
+            as.Date(sitrep_ae$Date_txt[i], format = "%d-%b-%y") )      # if a string, convert directly to Date
+  ), origin = "1970-01-01" )
+
+  sitrep_ae$Date_txt = NULL  # don't need this column anymore
+
+  # variable conversions
+  sitrep_ae = sitrep_ae %>%
+    dplyr::mutate(Date = as.POSIXct(Date),
+                  Attendances = as.integer(Attendances))
+
+
   ######################################################################################################
   ## A&E diverts
   ##
   sitrep_diverts = sitrep_diverts %>%
     dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
-    dplyr::select(-`NHS England Region`, -V__1) %>%
+    dplyr::select(-`Regional Team`, -V__1) %>%
     janitor::remove_empty(c("rows", "cols"))
 
   # convert to long format
   sitrep_diverts = sitrep_diverts %>%
     tidyr::gather(Date_txt, `Diverts`, -Code, -Name)
 
+  # some dates are ranges not single days - e.g. 11-13-Dec-15 - choose the most recent day in the range
+  sitrep_diverts$Date_txt = stringr::str_replace(sitrep_diverts$Date_txt, "([0-9]+)-[0-9]+", "\\1")
+  sitrep_diverts$Date_txt = ifelse(sitrep_diverts$Date_txt == "31-Dec-15-Jan-16", "31-Dec-15", sitrep_diverts$Date_txt)
+
   # convert to Date format - need to do this row by row using sapply()
-  sitrep_diverts$Date = janitor::excel_numeric_to_date(as.numeric(sitrep_diverts$Date_txt))
+  sitrep_diverts$Date = as.Date( sapply(1:nrow(sitrep_diverts), function(i)
+    ifelse( Hmisc::all.is.numeric(sitrep_diverts$Date_txt[i]),   # check if this row contains a number or a string
+            janitor::excel_numeric_to_date(as.numeric(sitrep_diverts$Date_txt[i])),  # if a number, use janitor::excel...() to convert it
+            as.Date(sitrep_diverts$Date_txt[i], format = "%d-%b-%y") )      # if a string, convert directly to Date
+  ), origin = "1970-01-01" )
+
   sitrep_diverts$Date_txt = NULL  # don't need this column anymore
 
   # variable conversions
@@ -167,15 +216,24 @@ load_sitreps_1516 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   ##
   sitrep_closures = sitrep_closures %>%
     dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
-    dplyr::select(-`NHS England Region`, -V__1) %>%
+    dplyr::select(-`Regional Team`, -V__1) %>%
     janitor::remove_empty(c("rows", "cols"))
 
   # convert to long format
   sitrep_closures = sitrep_closures %>%
     tidyr::gather(Date_txt, Closures, -Code, -Name)
 
+  # some dates are ranges not single days - e.g. 11-13-Dec-15 - choose the most recent day in the range
+  sitrep_closures$Date_txt = stringr::str_replace(sitrep_closures$Date_txt, "([0-9]+)-[0-9]+", "\\1")
+  sitrep_closures$Date_txt = ifelse(sitrep_closures$Date_txt == "31-Dec-15-Jan-16", "31-Dec-15", sitrep_closures$Date_txt)
+
   # convert to Date format - need to do this row by row using sapply()
-  sitrep_closures$Date = janitor::excel_numeric_to_date(as.numeric(sitrep_closures$Date_txt))
+  sitrep_closures$Date = as.Date( sapply(1:nrow(sitrep_closures), function(i)
+    ifelse( Hmisc::all.is.numeric(sitrep_closures$Date_txt[i]),   # check if this row contains a number or a string
+            janitor::excel_numeric_to_date(as.numeric(sitrep_closures$Date_txt[i])),  # if a number, use janitor::excel...() to convert it
+            as.Date(sitrep_closures$Date_txt[i], format = "%d-%b-%y") )      # if a string, convert directly to Date
+  ), origin = "1970-01-01" )
+
   sitrep_closures$Date_txt = NULL  # don't need this column anymore
 
   # variable conversions
@@ -230,6 +288,7 @@ load_sitreps_1516 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   ######################################################################################################
   ## Combine sitreps into one dataframe
   ##
+  sitrep_ae = na.omit(sitrep_ae)
   sitrep_beds = na.omit(sitrep_beds)
   sitrep_closures = na.omit(sitrep_closures)
   sitrep_critical = na.omit(sitrep_critical)
@@ -239,6 +298,7 @@ load_sitreps_1516 = function(sitrep_url = "https://www.england.nhs.uk/statistics
 
   sitrep = sitrep_diverts                    %>% dplyr::select(Code, Name, Date, Diverts) %>%
     dplyr::left_join(sitrep_closures         %>% dplyr::select(Code, Date, Closures),                                               by = c("Code", "Date")) %>%
+    dplyr::left_join(sitrep_ae               %>% dplyr::select(Code, Date, `A&E Attendances` = Attendances),                                               by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds             %>% dplyr::select(Code, Date, `Occupancy rate`),                                       by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_critical         %>% dplyr::select(Code, Date, `Critial beds occupancy rate` = `Occupancy rate`),       by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed      %>% dplyr::select(Code, Date, `No. beds closed due to norovirus etc.`),                by = c("Code", "Date")) %>%

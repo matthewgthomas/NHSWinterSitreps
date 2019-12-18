@@ -17,5 +17,7 @@ Imports:
   dplyr,
   tidyr,
   vctrs,
-  tibble
+  tibble,
+  stringr,
+  Hmisc
 RoxygenNote: 7.0.1

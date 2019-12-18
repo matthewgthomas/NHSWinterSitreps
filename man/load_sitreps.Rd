@@ -12,3 +12,6 @@ load_sitreps(winter)
 \description{
 Load timeseries of winter situation reports from the specified winter
 }
+\examples{
+sitrep_1819 = load_sitreps("2018-19")
+}

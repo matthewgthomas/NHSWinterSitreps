@@ -11,7 +11,6 @@
 #' @param sitrep_url URL of the timeseries file
 #'
 #' @importFrom magrittr "%>%"
-#' @export
 load_sitreps_1617 = function(sitrep_url = "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2016/12/DailySR-Web-file-Time-Series-18.xlsx") {
   ##
   ## load sitrep timeseries
