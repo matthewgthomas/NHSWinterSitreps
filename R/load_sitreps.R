@@ -1,12 +1,12 @@
 #' Load timeseries of winter situation reports from the specified winter
-#' @param winter The winter you want to fetch data for (can be "2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14")
+#' @param winter The winter you want to fetch data for (can be "2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14", "2012-13")
 #' @examples
 #' sitrep_1819 = load_sitreps("2018-19")
 #' @export
 load_sitreps = function(winter) {
 
   if (missing(winter)) stop("You must specify a winter")
-  if (!winter %in% c("2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14")) stop("`winter` must be one of '2019-20', '2018-19', '2017-18', '2016-17', '2015-16', '2014-15', '2013-14'")
+  if (!winter %in% c("2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14", "2012-13")) stop("`winter` must be one of '2019-20', '2018-19', '2017-18', '2016-17', '2015-16', '2014-15', '2013-14', '2012-13'")
 
   sitrep = tibble::tibble()
 
@@ -38,6 +38,10 @@ load_sitreps = function(winter) {
   } else if (winter == "2013-14") {
     # "Daily SR – Time series 4 November 2013 to 30 March 2014" data from https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/winter-daily-sitrep-2013-14-data-2/
     sitrep = load_sitreps_1314()
+
+  } else if (winter == "2012-13") {
+    # "Daily SR – Timeseries 6 November 2012 – 28 February 2013.xls" data from https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/winter-sitrep-data-2012-13/
+    sitrep = load_sitreps_1213()
 
   }
 
