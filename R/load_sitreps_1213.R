@@ -23,11 +23,11 @@ load_sitreps_1213 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   my_repair_names = function(x) vctrs::vec_as_names_legacy(x, sep = "__")
 
   # load sitrep data
-  sitrep_beds      = readxl::read_excel(tmp_sitrep, sheet = "G&A beds", skip = 14, .name_repair = ~ my_repair_names)        # general and acute beds
-  sitrep_closures  = readxl::read_excel(tmp_sitrep, sheet = "A&E closures", skip = 14, .name_repair = ~ my_repair_names)
-  sitrep_diverts   = readxl::read_excel(tmp_sitrep, sheet = "A&E diverts", skip = 14, .name_repair = ~ my_repair_names)
-  sitrep_critical  = readxl::read_excel(tmp_sitrep, sheet = "Adult critical care", skip = 14, .name_repair = ~ my_repair_names)
-  sitrep_beds_noro = readxl::read_excel(tmp_sitrep, sheet = "D&V, Norovirus",  skip = 14, .name_repair = ~ my_repair_names)
+  sitrep_beds      = readxl::read_excel(tmp_sitrep, sheet = "G&A beds", skip = 14, .name_repair = my_repair_names)        # general and acute beds
+  sitrep_closures  = readxl::read_excel(tmp_sitrep, sheet = "A&E closures", skip = 14, .name_repair = my_repair_names)
+  sitrep_diverts   = readxl::read_excel(tmp_sitrep, sheet = "A&E diverts", skip = 14, .name_repair = my_repair_names)
+  sitrep_critical  = readxl::read_excel(tmp_sitrep, sheet = "Adult critical care", skip = 14, .name_repair = my_repair_names)
+  sitrep_beds_noro = readxl::read_excel(tmp_sitrep, sheet = "D&V, Norovirus",  skip = 14, .name_repair = my_repair_names)
 
   ##
   ## sitrep date range

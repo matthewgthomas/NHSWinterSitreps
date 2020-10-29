@@ -1,4 +1,6 @@
-#' Load timeseries of winter situation reports in its most up-to-date format (from 2017-18 to present)
+#' Load timeseries of winter situation reports from 2019-20
+#'
+#' Downloads and cleans the "Winter SitRep: Acute Time series 2 December 2019 – 8 December 2019" data from https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/winter-daily-sitrep-2018-19-data/
 #'
 #' The returned tibble contains:
 #' - A&E diverts
@@ -9,14 +11,9 @@
 #' - Beds closed due to diarrhoea, vomiting, norovirus
 #'
 #' @param sitrep_url URL of the timeseries file
-#' @param closures_sheet_name Name of the 'A&E Closures' worksheet (it can differ from winter to winter)
-#' @param diverts_sheet_name Name of the 'A&E Diverts' worksheet (it can differ from winter to winter)
 #'
-#' @importFrom magrittr "%>%"
-#'
-load_sitreps_generic = function(sitrep_url,
-                                closures_sheet_name = "A&E Closures",
-                                diverts_sheet_name = "A&E Diverts") {
+#' @export
+load_sitreps_1920 = function(sitrep_url = "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2019/12/Winter-data-timeseries.xlsx") {
   ##
   ## load sitrep timeseries
   ##
@@ -28,12 +25,12 @@ load_sitreps_generic = function(sitrep_url,
   my_repair_names = function(x) vctrs::vec_as_names_legacy(x, sep = "__")
 
   # load sitrep data
-  sitrep_beds      = readxl::read_excel(tmp_sitrep, sheet = "G&A beds", skip = 14, .name_repair = my_repair_names)        # general and acute beds
-  sitrep_closures  = readxl::read_excel(tmp_sitrep, sheet = closures_sheet_name, skip = 14, .name_repair = my_repair_names)
-  sitrep_diverts   = readxl::read_excel(tmp_sitrep, sheet = diverts_sheet_name, skip = 14, .name_repair = my_repair_names)
-  sitrep_beds_long = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 14, .name_repair = my_repair_names)
-  sitrep_beds_noro = readxl::read_excel(tmp_sitrep, sheet = "D&V, Norovirus", skip = 14, .name_repair = my_repair_names)
-  sitrep_ambo      = readxl::read_excel(tmp_sitrep, sheet = "Ambulance Arrivals and Delays", skip = 14, .name_repair = my_repair_names)
+  sitrep_beds      = readxl::read_excel(tmp_sitrep, sheet = "G&A beds", skip = 14, .name_repair = ~ my_repair_names)        # general and acute beds
+  sitrep_closures  = readxl::read_excel(tmp_sitrep, sheet = "A&E Closures", skip = 14, .name_repair = ~ my_repair_names)
+  sitrep_diverts   = readxl::read_excel(tmp_sitrep, sheet = "A&E Diverts", skip = 14, .name_repair = ~ my_repair_names)
+  sitrep_beds_long = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 14, .name_repair = ~ my_repair_names)
+  sitrep_beds_noro = readxl::read_excel(tmp_sitrep, sheet = "D&V, Norovirus", skip = 14, .name_repair = ~ my_repair_names)
+  sitrep_ambo      = readxl::read_excel(tmp_sitrep, sheet = "Ambulance Arrivals and Delays", skip = 14, .name_repair = ~ my_repair_names)
 
   ##
   ## sitrep date range
@@ -76,7 +73,7 @@ load_sitreps_generic = function(sitrep_url,
   ##
   sitrep_beds = sitrep_beds %>%
     dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
-    dplyr::select(Code, Name, dplyr::starts_with("Occupancy rate")) %>%   # keep only bed occupancy rates
+    dplyr::select(Code, Name, starts_with("Occupancy rate")) %>%   # keep only bed occupancy rates
     janitor::remove_empty("rows")
 
   # convert to long format
@@ -256,7 +253,7 @@ load_sitreps_generic = function(sitrep_url,
   sitrep_beds_long_7 = na.omit(sitrep_beds_long_7)
   sitrep_beds_long_21 = na.omit(sitrep_beds_long_21)
 
-  sitrep = sitrep_ambo30 %>% dplyr::rename(Delays30 = Delays) %>%
+  sitrep_1920 = sitrep_ambo30 %>% dplyr::rename(Delays30 = Delays) %>%
     dplyr::left_join(sitrep_ambo60           %>% dplyr::select(Code, Date, Delays60 = Delays),                                      by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds             %>% dplyr::select(Code, Date, `Occupancy rate`),                                       by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed      %>% dplyr::select(Code, Date, `No. beds closed due to norovirus etc.`),                by = c("Code", "Date")) %>%
@@ -267,11 +264,11 @@ load_sitreps_generic = function(sitrep_url,
     dplyr::left_join(sitrep_diverts          %>% dplyr::select(Code, Date, Diverts),                                                by = c("Code", "Date"))
 
   # re-order columns
-  sitrep = sitrep %>% dplyr::select(Code, Name, Date, dplyr::everything())
+  sitrep_1819 = sitrep_1819 %>% dplyr::select(Code, Name, Date, dplyr::everything())
 
   # remove temp file
   unlink(tmp_sitrep)
 
   # return sitrep
-  sitrep
+  sitrep_1819
 }
