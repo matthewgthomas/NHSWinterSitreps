@@ -1,4 +1,4 @@
-#' Load timeseries of winter situation reports in its most up-to-date format (from 2017-18 to present)
+#' Load timeseries of winter situation reports in its most up-to-date format (from 2017-18 to 2019-20)
 #'
 #' The returned tibble contains:
 #' - A&E diverts
