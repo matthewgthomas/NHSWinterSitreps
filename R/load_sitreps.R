@@ -15,8 +15,8 @@ load_sitreps = function(winter) {
     sitrep = load_sitreps_2021("https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2020/11/UEC-Daily-SitRep-Acute-Web-File-Timeseries-1.xlsx")
 
   } else if (winter == "2019-20") {
-    # "Winter SitRep: Acute Time series 2 December 2019 – 8 December 2019" data from https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/winter-daily-sitrep-2018-19-data/
-    sitrep = load_sitreps_generic("https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2019/12/Winter-data-timeseries.xlsx")
+    # "Winter SitRep – Acute Time series 2 December 2019 – 1 March 2020" data from https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/winter-daily-sitrep-2019-20-data/
+    sitrep = load_sitreps_generic("https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2020/03/Winter-SitRep-Acute-Time-series-2-December-2019-1-March-2020.xlsx")
 
   } else if (winter == "2018-19") {
     # "Winter SitRep: Acute Time series 3 December 2018 to 3 March 2019" data from https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/winter-daily-sitrep-2018-19-data/
