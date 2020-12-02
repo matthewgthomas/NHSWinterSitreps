@@ -75,7 +75,7 @@ load_sitreps_generic = function(sitrep_url,
   ## Bed occupancy
   ##
   sitrep_beds = sitrep_beds %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("Occupancy rate")) %>%   # keep only bed occupancy rates
     janitor::remove_empty("rows")
 
@@ -96,7 +96,7 @@ load_sitreps_generic = function(sitrep_url,
   ## A&E diverts
   ##
   sitrep_diverts = sitrep_diverts %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(-`NHS England Region`, -V__1)
 
   # convert to long format
@@ -113,7 +113,7 @@ load_sitreps_generic = function(sitrep_url,
   ## A&E closures
   ##
   sitrep_closures = sitrep_closures %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(-`NHS England Region`, -V__1)
 
   # convert to long format
@@ -134,7 +134,7 @@ load_sitreps_generic = function(sitrep_url,
   ## > 7 days
   ##
   sitrep_beds_long_7 = sitrep_beds_long %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("> 7 days"))  # keep only people in for more than three weeks
 
   # convert to long format
@@ -151,7 +151,7 @@ load_sitreps_generic = function(sitrep_url,
   ## > 21 days
   ##
   sitrep_beds_long_21 = sitrep_beds_long %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("> 21 days"))  # keep only people in for more than three weeks
 
   # convert to long format
@@ -173,7 +173,7 @@ load_sitreps_generic = function(sitrep_url,
   ## beds closed
   ##
   sitrep_beds_closed = sitrep_beds_noro %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, `Beds closed`, dplyr::starts_with("Beds closed__"))
 
   # convert to long format
@@ -190,7 +190,7 @@ load_sitreps_generic = function(sitrep_url,
   ## beds closed unoccupied
   ##
   sitrep_beds_closed_unoc = sitrep_beds_noro %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, `Beds closed unocc`, dplyr::starts_with("Beds closed unocc__"))
 
   # convert to long format
@@ -212,7 +212,7 @@ load_sitreps_generic = function(sitrep_url,
   ## Delay 30-60 mins
   ##
   sitrep_ambo30 = sitrep_ambo %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("Delay 30"))
 
   # convert to long format
@@ -229,7 +229,7 @@ load_sitreps_generic = function(sitrep_url,
   ## Delay >60 mins
   ##
   sitrep_ambo60 = sitrep_ambo %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("Delay >"))
 
   # convert to long format

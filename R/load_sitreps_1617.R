@@ -62,7 +62,7 @@ load_sitreps_1617 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   ## Bed occupancy
   ##
   sitrep_beds = sitrep_beds %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("Total beds")) %>%   # keep only bed occupancy rates
     janitor::remove_empty("rows")
 
@@ -102,7 +102,7 @@ load_sitreps_1617 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   ##
   # tidy up data
   sitrep_critical = sitrep_critical %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("CC")) %>%   # keep only bed occupancy rates
     janitor::remove_empty("rows")
 
@@ -143,7 +143,7 @@ load_sitreps_1617 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   ## A&E diverts
   ##
   sitrep_diverts = sitrep_diverts %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(-`NHS England Region`, -V__1) %>%
     janitor::remove_empty(c("rows", "cols"))
 
@@ -165,7 +165,7 @@ load_sitreps_1617 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   ## A&E closures
   ##
   sitrep_closures = sitrep_closures %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(-`NHS England Region`, -V__1) %>%
     janitor::remove_empty(c("rows", "cols"))
 
@@ -191,7 +191,7 @@ load_sitreps_1617 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   ## beds closed
   ##
   sitrep_beds_closed = sitrep_beds_noro %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, `Beds closed norovirus`, dplyr::starts_with("Beds closed norovirus__")) %>%
     janitor::remove_empty("rows")
 
@@ -210,7 +210,7 @@ load_sitreps_1617 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   ## beds closed unoccupied
   ##
   sitrep_beds_closed_unoc = sitrep_beds_noro %>%
-    dplyr::slice(-c(1, 2)) %>%   # skip the first two lines
+    dplyr::slice(-c(2)) %>%   # skip blank line
     dplyr::select(Code, Name, `Beds closed unocc`, dplyr::starts_with("Beds closed unocc__")) %>%
     janitor::remove_empty("rows")
 
