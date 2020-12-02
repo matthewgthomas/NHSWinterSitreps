@@ -2,7 +2,7 @@
 % Please edit documentation in R/load_sitreps_generic.R
 \name{load_sitreps_generic}
 \alias{load_sitreps_generic}
-\title{Load timeseries of winter situation reports in its most up-to-date format (from 2017-18 to present)}
+\title{Load timeseries of winter situation reports in its most up-to-date format (from 2017-18 to 2019-20)}
 \usage{
 load_sitreps_generic(
   sitrep_url,

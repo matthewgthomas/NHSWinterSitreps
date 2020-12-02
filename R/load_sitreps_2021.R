@@ -1,16 +1,14 @@
 #' Load timeseries of winter situation reports for 2020-21
 #'
 #' The returned tibble contains:
-#' - G&A beds
+#' - General & Acute beds
 #' - Adult critical care
 #'
 #' @param sitrep_url URL of the timeseries file
-#' @param closures_sheet_name Name of the 'A&E Closures' worksheet (it can differ from winter to winter)
-#' @param diverts_sheet_name Name of the 'A&E Diverts' worksheet (it can differ from winter to winter)
 #'
 #' @importFrom magrittr "%>%"
 #'
-load_sitreps_generic = function(sitrep_url) {
+load_sitreps_2021 = function(sitrep_url) {
   ##
   ## load sitrep timeseries
   ##
