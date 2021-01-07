@@ -20,8 +20,9 @@ load_sitreps_2021 = function(sitrep_url) {
   my_repair_names = function(x) vctrs::vec_as_names_legacy(x, sep = "__")
 
   # load sitrep data
-  sitrep_beds     = readxl::read_excel(tmp_sitrep, sheet = "G&A beds", skip = 14, .name_repair = my_repair_names)             # general and acute beds
-  sitrep_critical = readxl::read_excel(tmp_sitrep, sheet = "Adult critical care", skip = 14, .name_repair = my_repair_names)  # adult critical care
+  sitrep_beds      = readxl::read_excel(tmp_sitrep, sheet = "G&A beds", skip = 14, .name_repair = my_repair_names)             # general and acute beds
+  sitrep_critical  = readxl::read_excel(tmp_sitrep, sheet = "Adult critical care", skip = 14, .name_repair = my_repair_names)  # adult critical care
+  sitrep_beds_long = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 14, .name_repair = my_repair_names)
 
   ##
   ## sitrep date range
@@ -40,12 +41,33 @@ load_sitreps_2021 = function(sitrep_url) {
   sitrep_dates$Occupancy = c("Occupancy rate",
                              paste("Occupancy rate", seq(1:num_cols), sep="__"))
 
+  # - Dates for long-stay patients started later -
+  sitrep_dates_long = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 12, n_max = 1) %>%
+    janitor::remove_empty("cols")
+
+  # clean up dates
+  sitrep_dates_long = t(sitrep_dates_long) %>%
+    dplyr::as_tibble() %>%
+    dplyr::rename(Date = V1)
+
+  # add columns for lookups to bed occupancy and long stay patients columns
+  num_cols = length( names(sitrep_beds_long)[ grep("> 21 days", names(sitrep_beds_long)) ] ) - 1  # how many time series columns are there?
+
+  sitrep_dates_long$LongStay = c("> 21 days",
+                                 paste("> 21 days", seq(1:num_cols), sep="__"))
+
+  sitrep_dates_long$LongStay_7 = c("> 7 days",
+                                   paste("> 7 days", seq(1:num_cols), sep="__"))
+
+  sitrep_dates = sitrep_dates %>%
+    dplyr::left_join(sitrep_dates_long, by = "Date")
+
 
   ######################################################################################################
   ## Bed occupancy
   ##
   sitrep_beds = sitrep_beds %>%
-    dplyr::slice(-c(2)) %>%   # skip blank line
+    dplyr::slice(-c(3)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("Total beds")) %>%   # keep only bed occupancy rates
     janitor::remove_empty("rows")
 
@@ -87,7 +109,7 @@ load_sitreps_2021 = function(sitrep_url) {
   ##
   # tidy up data
   sitrep_critical = sitrep_critical %>%
-    dplyr::slice(-c(2)) %>%   # skip blank line
+    dplyr::slice(-c(3)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("CC")) %>%   # keep only bed occupancy rates
     janitor::remove_empty("rows")
 
@@ -126,13 +148,56 @@ load_sitreps_2021 = function(sitrep_url) {
 
 
   ######################################################################################################
+  ## Beds occupied by long-stay patients (> 7 days and > 21 days)
+  ##
+
+  ##
+  ## > 7 days
+  ##
+  sitrep_beds_long_7 = sitrep_beds_long %>%
+    dplyr::slice(-c(3)) %>%   # skip blank line
+    dplyr::select(Code, Name, dplyr::starts_with("> 7 days"))  # keep only people in for more than three weeks
+
+  # convert to long format
+  sitrep_beds_long_7 = sitrep_beds_long_7 %>%
+    tidyr::gather(LongStay, `No. beds  occupied by long-stay patients (> 7 days)`, -Code, -Name) %>%
+    dplyr::left_join(sitrep_dates %>% dplyr::select(Date, LongStay = LongStay_7), by = "LongStay")  # merge in dates that correspond to column names
+
+  # variable conversions
+  sitrep_beds_long_7 = sitrep_beds_long_7 %>%
+    dplyr::select(-LongStay) %>%
+    dplyr::mutate(Date = as.POSIXct(Date))
+
+  ##
+  ## > 21 days
+  ##
+  sitrep_beds_long_21 = sitrep_beds_long %>%
+    dplyr::slice(-c(3)) %>%   # skip blank line
+    dplyr::select(Code, Name, dplyr::starts_with("> 21 days"))  # keep only people in for more than three weeks
+
+  # convert to long format
+  sitrep_beds_long_21 = sitrep_beds_long_21 %>%
+    tidyr::gather(LongStay, `No. beds occupied by long-stay patients (> 21 days)`, -Code, -Name) %>%
+    dplyr::left_join(sitrep_dates %>% dplyr::select(Date, LongStay), by = "LongStay")  # merge in dates that correspond to column names
+
+  # variable conversions
+  sitrep_beds_long_21 = sitrep_beds_long_21 %>%
+    dplyr::select(-LongStay) %>%
+    dplyr::mutate(Date = as.POSIXct(Date))
+
+
+  ######################################################################################################
   ## Combine sitreps into one dataframe
   ##
   sitrep_beds = na.omit(sitrep_beds)
   sitrep_critical = na.omit(sitrep_critical)
+  sitrep_beds_long_7 = na.omit(sitrep_beds_long_7)
+  sitrep_beds_long_21 = na.omit(sitrep_beds_long_21)
 
   sitrep = sitrep_beds %>%
-    dplyr::left_join(sitrep_critical %>% dplyr::select(Code, Date, `Critical care beds occupancy rate`), by = c("Code", "Date"))
+    dplyr::left_join(sitrep_critical     %>% dplyr::select(Code, Date, `Critical care beds occupancy rate`), by = c("Code", "Date")) %>%
+    dplyr::left_join(sitrep_beds_long_7  %>% dplyr::select(Code, Date, `No. beds  occupied by long-stay patients (> 7 days)`),  by = c("Code", "Date")) %>%
+    dplyr::left_join(sitrep_beds_long_21 %>% dplyr::select(Code, Date, `No. beds occupied by long-stay patients (> 21 days)`),  by = c("Code", "Date"))
 
   # re-order columns
   sitrep = sitrep %>% dplyr::select(Code, Name, Date, dplyr::everything())
