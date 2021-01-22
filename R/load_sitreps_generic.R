@@ -29,6 +29,7 @@ load_sitreps_generic = function(sitrep_url,
 
   # load sitrep data
   sitrep_beds      = readxl::read_excel(tmp_sitrep, sheet = "G&A beds", skip = 14, .name_repair = my_repair_names)        # general and acute beds
+  sitrep_critical  = readxl::read_excel(tmp_sitrep, sheet = "Adult critical care", skip = 14, .name_repair = my_repair_names)  # adult critical care
   sitrep_closures  = readxl::read_excel(tmp_sitrep, sheet = closures_sheet_name, skip = 14, .name_repair = my_repair_names)
   sitrep_diverts   = readxl::read_excel(tmp_sitrep, sheet = diverts_sheet_name, skip = 14, .name_repair = my_repair_names)
   sitrep_beds_long = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 14, .name_repair = my_repair_names)
@@ -90,6 +91,60 @@ load_sitreps_generic = function(sitrep_url,
     dplyr::mutate(`Occupancy rate` = dplyr::na_if(`Occupancy rate`, "-")) %>%
     dplyr::mutate(`Occupancy rate` = as.numeric(`Occupancy rate`),
                   Date = as.POSIXct(Date))
+
+
+  #########################################################################################
+  ## Adult critical care bed occupancy rate
+  ##
+  # tidy up data
+  sitrep_critical = sitrep_critical %>%
+    dplyr::slice(-c(3))   # skip blank line
+
+
+  if (length( names(sitrep_critical)[ grep("Occupancy", names(sitrep_critical)) ] ) > 0) {
+    sitrep_critical = sitrep_critical %>%
+      dplyr::select(Code, Name, dplyr::starts_with("Occupancy rate")) %>%   # keep only bed occupancy rates
+      janitor::remove_empty("rows")
+
+  } else {
+    # data doesn't contain a pre-calculated occupancy rate, so calculate one
+    sitrep_critical = sitrep_critical %>%
+      dplyr::select(Code, Name, dplyr::starts_with("CC")) %>%   # keep only bed occupancy rates
+      janitor::remove_empty("rows")
+
+    # calculate bed occupancy rates for each pair of "Total beds available/occupied" columns
+    #... do the first pair manually
+    sitrep_critical$`Occupancy rate` = as.numeric(sitrep_critical$`CC Adult Occ`) / as.numeric(sitrep_critical$`CC Adult Open`)
+
+    #... now loop over the rest of the columns, calculating occupancy rates
+    num_cols = length( names(sitrep_critical)[ grep("CC Adult Occ", names(sitrep_critical)) ] ) - 1  # how many time series columns are there?
+
+    for (i in 1:num_cols) {
+      # get current pair of available/occupied columns
+      tmp_cols = sitrep_critical[, grep( paste0("CC Adult.*__", i, "$"), colnames(sitrep_critical)) ]
+      # calculate occupancy rate (needs unlist() otherwise as.numeric() doesn't work)
+      sitrep_critical$rate_tmp = as.numeric(unlist(tmp_cols[,2])) /  as.numeric(unlist(tmp_cols[,1]))
+      # rename column to include "__i"
+      names(sitrep_critical)[ names(sitrep_critical) == "rate_tmp" ] = paste0("Occupancy rate__", i)
+    }
+  }
+
+  # keep only new occupancy rate columns
+  sitrep_critical = sitrep_critical %>%
+    dplyr::select(Code, Name, dplyr::starts_with("Occupancy rate"))
+
+  # convert to long format
+  sitrep_critical = sitrep_critical %>%
+    tidyr::gather(Occupancy, `Occupancy rate`, -Code, -Name) %>%
+    dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Occupancy), by = "Occupancy")  # merge in dates that correspond to column names
+
+  # variable conversions
+  sitrep_critical = sitrep_critical %>%
+    dplyr::select(-Occupancy) %>%
+    dplyr::mutate(`Occupancy rate` = dplyr::na_if(`Occupancy rate`, "-")) %>%
+    dplyr::mutate(`Occupancy rate` = as.numeric(`Occupancy rate`),
+                  Date = as.POSIXct(Date)) %>%
+    dplyr::rename(`Critical care beds occupancy rate` = `Occupancy rate`)
 
 
   ######################################################################################################
@@ -249,6 +304,7 @@ load_sitreps_generic = function(sitrep_url,
   sitrep_ambo30 = na.omit(sitrep_ambo30)
   sitrep_ambo60 = na.omit(sitrep_ambo60)
   sitrep_beds = na.omit(sitrep_beds)
+  sitrep_critical = na.omit(sitrep_critical)
   sitrep_closures = na.omit(sitrep_closures)
   sitrep_diverts = na.omit(sitrep_diverts)
   sitrep_beds_closed = na.omit(sitrep_beds_closed)
@@ -259,6 +315,7 @@ load_sitreps_generic = function(sitrep_url,
   sitrep = sitrep_ambo30 %>% dplyr::rename(Delays30 = Delays) %>%
     dplyr::left_join(sitrep_ambo60           %>% dplyr::select(Code, Date, Delays60 = Delays),                                      by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds             %>% dplyr::select(Code, Date, `Occupancy rate`),                                       by = c("Code", "Date")) %>%
+    dplyr::left_join(sitrep_critical     %>% dplyr::select(Code, Date, `Critical care beds occupancy rate`), by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed      %>% dplyr::select(Code, Date, `No. beds closed due to norovirus etc.`),                by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed_unoc %>% dplyr::select(Code, Date, `No. unoccupied beds closed due to norovirus etc.`),     by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_long_7      %>% dplyr::select(Code, Date, `No. beds  occupied by long-stay patients (> 7 days)`),  by = c("Code", "Date")) %>%
