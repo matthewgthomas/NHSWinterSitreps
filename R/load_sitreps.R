@@ -12,7 +12,7 @@ load_sitreps = function(winter) {
 
   if (winter == "2020-21") {
     # "Urgent and Emergency Care Daily Situation Reports 2020-21" data from https://www.england.nhs.uk/statistics/statistical-work-areas/uec-sitrep/urgent-and-emergency-care-daily-situation-reports-2020-21/
-    sitrep = load_sitreps_2021("https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2021/01/UEC-Daily-SitRep-Acute-Web-File-Timeseries-1.xlsx")
+    sitrep = load_sitreps_2021("https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2021/01/UEC-Daily-SitRep-Acute-Web-File-Timeseries-3.xlsx")
 
   } else if (winter == "2019-20") {
     # "Winter SitRep – Acute Time series 2 December 2019 – 1 March 2020" data from https://www.england.nhs.uk/statistics/statistical-work-areas/winter-daily-sitreps/winter-daily-sitrep-2019-20-data/
