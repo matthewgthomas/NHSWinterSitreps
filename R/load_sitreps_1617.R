@@ -239,7 +239,7 @@ load_sitreps_1617 = function(sitrep_url = "https://www.england.nhs.uk/statistics
   sitrep = sitrep_diverts                    %>% dplyr::select(Code, Name, Date, Diverts) %>%
     dplyr::left_join(sitrep_closures         %>% dplyr::select(Code, Date, Closures),                                               by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds             %>% dplyr::select(Code, Date, `Occupancy rate`),                                       by = c("Code", "Date")) %>%
-    dplyr::left_join(sitrep_critical         %>% dplyr::select(Code, Date, `Critial beds occupancy rate` = `Occupancy rate`),       by = c("Code", "Date")) %>%
+    dplyr::left_join(sitrep_critical         %>% dplyr::select(Code, Date, `Critical care beds occupancy rate` = `Occupancy rate`),       by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed      %>% dplyr::select(Code, Date, `No. beds closed due to norovirus etc.`),                by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed_unoc %>% dplyr::select(Code, Date, `No. unoccupied beds closed due to norovirus etc.`),     by = c("Code", "Date"))
 
