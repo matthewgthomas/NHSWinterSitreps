@@ -24,6 +24,7 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_beds_paed  = readxl::read_excel(tmp_sitrep, sheet = "Paediatric G&A beds", skip = 14, .name_repair = my_repair_names)             # general and acute beds
   sitrep_critical   = readxl::read_excel(tmp_sitrep, sheet = "Adult critical care", skip = 14, .name_repair = my_repair_names)  # adult critical care
   sitrep_beds_long  = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 14, .name_repair = my_repair_names)
+  sitrep_ambo       = readxl::read_excel(tmp_sitrep, sheet = "Ambulance Arrivals and Delays", skip = 14, .name_repair = my_repair_names)
 
   ##
   ## sitrep date range
@@ -74,6 +75,12 @@ load_sitreps_2122 = function(sitrep_url) {
 
   sitrep_dates = sitrep_dates %>%
     dplyr::left_join(sitrep_dates_long, by = "Date")
+
+  sitrep_dates$Ambo30 = c("Delay 30-60 mins",
+                          paste("Delay 30-60 mins", seq(1:num_cols), sep="__"))
+
+  sitrep_dates$Ambo60 = c("Delay >60 mins",
+                          paste("Delay >60 mins", seq(1:num_cols), sep="__"))
 
   sitrep_dates_long = sitrep_dates %>%
     tidyr::pivot_longer(cols = -Date) %>%
@@ -259,17 +266,60 @@ load_sitreps_2122 = function(sitrep_url) {
 
 
   ######################################################################################################
+  ## Ambulance delays
+  ##
+
+  ##
+  ## Delay 30-60 mins
+  ##
+  sitrep_ambo30 = sitrep_ambo %>%
+    dplyr::slice(-c(2)) %>%   # skip blank line
+    dplyr::select(Code, Name, dplyr::starts_with("Delay 30"))
+
+  # convert to long format
+  sitrep_ambo30 = sitrep_ambo30 %>%
+    tidyr::gather(Ambo30, Delays, -Code, -Name) %>%
+    dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Ambo30), by = "Ambo30")  # merge in dates that correspond to column names
+
+  # variable conversions
+  sitrep_ambo30 = sitrep_ambo30 %>%
+    dplyr::select(-Ambo30) %>%
+    dplyr::mutate(Date = as.POSIXct(Date))
+
+  ##
+  ## Delay >60 mins
+  ##
+  sitrep_ambo60 = sitrep_ambo %>%
+    dplyr::slice(-c(2)) %>%   # skip blank line
+    dplyr::select(Code, Name, dplyr::starts_with("Delay >"))
+
+  # convert to long format
+  sitrep_ambo60 = sitrep_ambo60 %>%
+    tidyr::gather(Ambo60, Delays, -Code, -Name) %>%
+    dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Ambo60), by = "Ambo60")  # merge in dates that correspond to column names
+
+  # variable conversions
+  sitrep_ambo60 = sitrep_ambo60 %>%
+    dplyr::select(-Ambo60) %>%
+    dplyr::mutate(Date = as.POSIXct(Date))
+
+
+  ######################################################################################################
   ## Combine sitreps into one dataframe
   ##
+  sitrep_ambo30 = na.omit(sitrep_ambo30)
+  sitrep_ambo60 = na.omit(sitrep_ambo60)
   sitrep_beds = na.omit(sitrep_beds)
   sitrep_critical = na.omit(sitrep_critical)
   sitrep_beds_long_7 = na.omit(sitrep_beds_long_7)
   sitrep_beds_long_21 = na.omit(sitrep_beds_long_21)
 
   sitrep = sitrep_beds %>%
-    dplyr::left_join(sitrep_critical     %>% dplyr::select(Code, Date, `Critical care beds occupancy rate`), by = c("Code", "Date")) %>%
-    dplyr::left_join(sitrep_beds_long_7  %>% dplyr::select(Code, Date, `No. beds  occupied by long-stay patients (> 7 days)`),  by = c("Code", "Date")) %>%
-    dplyr::left_join(sitrep_beds_long_21 %>% dplyr::select(Code, Date, `No. beds occupied by long-stay patients (> 21 days)`),  by = c("Code", "Date"))
+    dplyr::left_join(sitrep_ambo30       %>% dplyr::select(Code, Name, Date, Delays30 = Delays), by = c("Code", "Name", "Date")) %>%
+    dplyr::left_join(sitrep_ambo60       %>% dplyr::select(Code, Name, Date, Delays60 = Delays), by = c("Code", "Name", "Date")) %>%
+    dplyr::left_join(sitrep_critical     %>% dplyr::select(Code, Name, Date, `Critical care beds occupancy rate`), by = c("Code", "Name", "Date")) %>%
+    dplyr::left_join(sitrep_beds_long_7  %>% dplyr::select(Code, Name, Date, `No. beds  occupied by long-stay patients (> 7 days)`),  by = c("Code", "Name", "Date")) %>%
+    dplyr::left_join(sitrep_beds_long_21 %>% dplyr::select(Code, Name, Date, `No. beds occupied by long-stay patients (> 21 days)`),  by = c("Code", "Name", "Date"))
 
   # re-order columns
   sitrep = sitrep %>% dplyr::select(Code, Name, Date, dplyr::everything())
