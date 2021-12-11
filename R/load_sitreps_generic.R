@@ -194,7 +194,7 @@ load_sitreps_generic = function(sitrep_url,
 
   # convert to long format
   sitrep_beds_long_7 = sitrep_beds_long_7 %>%
-    tidyr::gather(LongStay, `No. beds  occupied by long-stay patients (> 7 days)`, -Code, -Name) %>%
+    tidyr::gather(LongStay, `No. beds occupied by long-stay patients (> 7 days)`, -Code, -Name) %>%
     dplyr::left_join(sitrep_dates %>% dplyr::select(Date, LongStay = LongStay_7), by = "LongStay")  # merge in dates that correspond to column names
 
   # variable conversions
@@ -315,10 +315,10 @@ load_sitreps_generic = function(sitrep_url,
   sitrep = sitrep_ambo30 %>% dplyr::rename(Delays30 = Delays) %>%
     dplyr::left_join(sitrep_ambo60           %>% dplyr::select(Code, Date, Delays60 = Delays),                                      by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds             %>% dplyr::select(Code, Date, `Occupancy rate`),                                       by = c("Code", "Date")) %>%
-    dplyr::left_join(sitrep_critical     %>% dplyr::select(Code, Date, `Critical care beds occupancy rate`), by = c("Code", "Date")) %>%
+    dplyr::left_join(sitrep_critical         %>% dplyr::select(Code, Date, `Critical care beds occupancy rate`), by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed      %>% dplyr::select(Code, Date, `No. beds closed due to norovirus etc.`),                by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed_unoc %>% dplyr::select(Code, Date, `No. unoccupied beds closed due to norovirus etc.`),     by = c("Code", "Date")) %>%
-    dplyr::left_join(sitrep_beds_long_7      %>% dplyr::select(Code, Date, `No. beds  occupied by long-stay patients (> 7 days)`),  by = c("Code", "Date")) %>%
+    dplyr::left_join(sitrep_beds_long_7      %>% dplyr::select(Code, Date, `No. beds occupied by long-stay patients (> 7 days)`),  by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_long_21     %>% dplyr::select(Code, Date, `No. beds occupied by long-stay patients (> 21 days)`),  by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_closures         %>% dplyr::select(Code, Date, Closures),                                               by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_diverts          %>% dplyr::select(Code, Date, Diverts),                                                by = c("Code", "Date"))

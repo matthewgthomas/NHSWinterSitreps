@@ -249,7 +249,7 @@ load_sitreps_2122 = function(sitrep_url) {
 
   # convert to long format
   sitrep_beds_long_7 = sitrep_beds_long_7 %>%
-    tidyr::gather(LongStay, `No. beds  occupied by long-stay patients (> 7 days)`, -Code, -Name) %>%
+    tidyr::gather(LongStay, `No. beds occupied by long-stay patients (> 7 days)`, -Code, -Name) %>%
     dplyr::left_join(sitrep_dates %>% dplyr::select(Date, LongStay = LongStay_7), by = "LongStay")  # merge in dates that correspond to column names
 
   # variable conversions
@@ -404,7 +404,7 @@ load_sitreps_2122 = function(sitrep_url) {
     dplyr::left_join(sitrep_ambo30       %>% dplyr::select(Code, Name, Date, Delays30 = Delays), by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_ambo60       %>% dplyr::select(Code, Name, Date, Delays60 = Delays), by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_critical     %>% dplyr::select(Code, Name, Date, `Critical care beds occupancy rate`), by = c("Code", "Name", "Date")) %>%
-    dplyr::left_join(sitrep_beds_long_7  %>% dplyr::select(Code, Name, Date, `No. beds  occupied by long-stay patients (> 7 days)`),  by = c("Code", "Name", "Date")) %>%
+    dplyr::left_join(sitrep_beds_long_7  %>% dplyr::select(Code, Name, Date, `No. beds occupied by long-stay patients (> 7 days)`),  by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_beds_long_21 %>% dplyr::select(Code, Name, Date, `No. beds occupied by long-stay patients (> 21 days)`),  by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_flu_GA       %>% dplyr::select(Code, Name, Date, `No. beds occupied by flu patients (G&A)`),  by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_flu_CC       %>% dplyr::select(Code, Name, Date, `No. beds occupied by flu patients (Critical Care)`),  by = c("Code", "Name", "Date")) %>%
