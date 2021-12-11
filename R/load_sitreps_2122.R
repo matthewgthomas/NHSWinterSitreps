@@ -24,6 +24,7 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_beds_paed  = readxl::read_excel(tmp_sitrep, sheet = "Paediatric G&A beds", skip = 14, .name_repair = my_repair_names)             # general and acute beds
   sitrep_critical   = readxl::read_excel(tmp_sitrep, sheet = "Adult critical care", skip = 14, .name_repair = my_repair_names)  # adult critical care
   sitrep_beds_long  = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 14, .name_repair = my_repair_names)
+  sitrep_beds_flu   = readxl::read_excel(tmp_sitrep, sheet = "Flu", skip = 14, .name_repair = my_repair_names)
   sitrep_ambo       = readxl::read_excel(tmp_sitrep, sheet = "Ambulance Arrivals and Delays", skip = 14, .name_repair = my_repair_names)
   sitrep_closures   = readxl::read_excel(tmp_sitrep, sheet = "A&E Closures", skip = 14, .name_repair = my_repair_names)
   sitrep_diverts    = readxl::read_excel(tmp_sitrep, sheet = "A&E Diverts", skip = 14, .name_repair = my_repair_names)
@@ -57,6 +58,12 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_dates$Occupancy = c("Occupancy rate",
                              paste("Occupancy rate", seq(1:num_cols), sep="__"))
 
+  sitrep_dates$Flu_GA = c("G&A flu beds",
+                          paste("G&A flu beds", seq(1:num_cols), sep="__"))
+
+  sitrep_dates$Flu_CC = c("CC flu beds",
+                          paste("CC flu beds", seq(1:num_cols), sep="__"))
+
   # - Dates for long-stay patients started later -
   sitrep_dates_long = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 12, n_max = 1) %>%
     janitor::remove_empty("cols")
@@ -84,6 +91,7 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_dates$Ambo60 = c("Delay >60 mins",
                           paste("Delay >60 mins", seq(1:num_cols), sep="__"))
 
+  # Convert to long format for joining with bed occupancy data in the next section
   sitrep_dates_long = sitrep_dates %>%
     tidyr::pivot_longer(cols = -Date) %>%
     dplyr::select(-name)
@@ -268,6 +276,45 @@ load_sitreps_2122 = function(sitrep_url) {
 
 
   ######################################################################################################
+  ## Beds occupied by flu patients (General & Acute, and Critical Care)
+  ##
+
+  ##
+  ## General & Acute
+  ##
+  sitrep_flu_GA = sitrep_beds_flu %>%
+    dplyr::slice(-c(3)) %>%   # skip blank line
+    dplyr::select(Code, Name, dplyr::starts_with("G&A"))
+
+  # convert to long format
+  sitrep_flu_GA = sitrep_flu_GA %>%
+    tidyr::gather(Flu, `No. beds occupied by flu patients (G&A)`, -Code, -Name) %>%
+    dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Flu = Flu_GA), by = "Flu")  # merge in dates that correspond to column names
+
+  # variable conversions
+  sitrep_flu_GA = sitrep_flu_GA %>%
+    dplyr::select(-Flu) %>%
+    dplyr::mutate(Date = as.POSIXct(Date))
+
+  ##
+  ## Critical care
+  ##
+  sitrep_flu_CC = sitrep_beds_flu %>%
+    dplyr::slice(-c(3)) %>%   # skip blank line
+    dplyr::select(Code, Name, dplyr::starts_with("CC"))
+
+  # convert to long format
+  sitrep_flu_CC = sitrep_flu_CC %>%
+    tidyr::gather(Flu, `No. beds occupied by flu patients (Critical Care)`, -Code, -Name) %>%
+    dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Flu = Flu_CC), by = "Flu")  # merge in dates that correspond to column names
+
+  # variable conversions
+  sitrep_flu_CC = sitrep_flu_CC %>%
+    dplyr::select(-Flu) %>%
+    dplyr::mutate(Date = as.POSIXct(Date))
+
+
+  ######################################################################################################
   ## Ambulance delays
   ##
 
@@ -304,6 +351,7 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_ambo60 = sitrep_ambo60 %>%
     dplyr::select(-Ambo60) %>%
     dplyr::mutate(Date = as.POSIXct(Date))
+
 
   ######################################################################################################
   ## A&E diverts
@@ -347,6 +395,8 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_critical = na.omit(sitrep_critical)
   sitrep_beds_long_7 = na.omit(sitrep_beds_long_7)
   sitrep_beds_long_21 = na.omit(sitrep_beds_long_21)
+  sitrep_flu_GA = na.omit(sitrep_flu_GA)
+  sitrep_flu_CC = na.omit(sitrep_flu_CC)
   sitrep_closures = na.omit(sitrep_closures)
   sitrep_diverts = na.omit(sitrep_diverts)
 
@@ -356,6 +406,8 @@ load_sitreps_2122 = function(sitrep_url) {
     dplyr::left_join(sitrep_critical     %>% dplyr::select(Code, Name, Date, `Critical care beds occupancy rate`), by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_beds_long_7  %>% dplyr::select(Code, Name, Date, `No. beds  occupied by long-stay patients (> 7 days)`),  by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_beds_long_21 %>% dplyr::select(Code, Name, Date, `No. beds occupied by long-stay patients (> 21 days)`),  by = c("Code", "Name", "Date")) %>%
+    dplyr::left_join(sitrep_flu_GA       %>% dplyr::select(Code, Name, Date, `No. beds occupied by flu patients (G&A)`),  by = c("Code", "Name", "Date")) %>%
+    dplyr::left_join(sitrep_flu_CC       %>% dplyr::select(Code, Name, Date, `No. beds occupied by flu patients (Critical Care)`),  by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_closures     %>% dplyr::select(Code, Name, Date, Closures), by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_diverts      %>% dplyr::select(Code, Name, Date, Diverts), by = c("Code", "Name", "Date"))
 
