@@ -26,6 +26,7 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_beds_long  = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 14, .name_repair = my_repair_names)
   sitrep_ambo       = readxl::read_excel(tmp_sitrep, sheet = "Ambulance Arrivals and Delays", skip = 14, .name_repair = my_repair_names)
   sitrep_closures   = readxl::read_excel(tmp_sitrep, sheet = "A&E Closures", skip = 14, .name_repair = my_repair_names)
+  sitrep_diverts    = readxl::read_excel(tmp_sitrep, sheet = "A&E Diverts", skip = 14, .name_repair = my_repair_names)
 
   ##
   ## sitrep date range
@@ -305,6 +306,22 @@ load_sitreps_2122 = function(sitrep_url) {
     dplyr::mutate(Date = as.POSIXct(Date))
 
   ######################################################################################################
+  ## A&E diverts
+  ##
+  sitrep_diverts = sitrep_diverts %>%
+    dplyr::slice(-c(3)) %>%   # skip blank line
+    dplyr::select(-`NHS England Region`, -V__1)
+
+  # convert to long format
+  sitrep_diverts = sitrep_diverts %>%
+    tidyr::gather(Date, `Diverts`, -Code, -Name) %>%
+    dplyr::mutate(Date = janitor::excel_numeric_to_date(as.integer(Date)))  # convert numbers to dates
+
+  # variable conversions
+  sitrep_diverts = sitrep_diverts %>%
+    dplyr::mutate(Date = as.POSIXct(Date))
+
+  ######################################################################################################
   ## A&E closures
   ##
   sitrep_closures = sitrep_closures %>%
@@ -331,6 +348,7 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_beds_long_7 = na.omit(sitrep_beds_long_7)
   sitrep_beds_long_21 = na.omit(sitrep_beds_long_21)
   sitrep_closures = na.omit(sitrep_closures)
+  sitrep_diverts = na.omit(sitrep_diverts)
 
   sitrep = sitrep_beds %>%
     dplyr::left_join(sitrep_ambo30       %>% dplyr::select(Code, Name, Date, Delays30 = Delays), by = c("Code", "Name", "Date")) %>%
@@ -338,7 +356,8 @@ load_sitreps_2122 = function(sitrep_url) {
     dplyr::left_join(sitrep_critical     %>% dplyr::select(Code, Name, Date, `Critical care beds occupancy rate`), by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_beds_long_7  %>% dplyr::select(Code, Name, Date, `No. beds  occupied by long-stay patients (> 7 days)`),  by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_beds_long_21 %>% dplyr::select(Code, Name, Date, `No. beds occupied by long-stay patients (> 21 days)`),  by = c("Code", "Name", "Date")) %>%
-    dplyr::left_join(sitrep_closures     %>% dplyr::select(Code, Name, Date, Closures), by = c("Code", "Name", "Date"))
+    dplyr::left_join(sitrep_closures     %>% dplyr::select(Code, Name, Date, Closures), by = c("Code", "Name", "Date")) %>%
+    dplyr::left_join(sitrep_diverts      %>% dplyr::select(Code, Name, Date, Diverts), by = c("Code", "Name", "Date"))
 
   # re-order columns
   sitrep = sitrep %>% dplyr::select(Code, Name, Date, dplyr::everything())
