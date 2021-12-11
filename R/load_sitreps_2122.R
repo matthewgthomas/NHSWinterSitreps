@@ -322,7 +322,7 @@ load_sitreps_2122 = function(sitrep_url) {
   ## Delay 30-60 mins
   ##
   sitrep_ambo30 = sitrep_ambo %>%
-    dplyr::slice(-c(2)) %>%   # skip blank line
+    dplyr::slice(-c(3)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("Delay 30"))
 
   # convert to long format
@@ -339,7 +339,7 @@ load_sitreps_2122 = function(sitrep_url) {
   ## Delay >60 mins
   ##
   sitrep_ambo60 = sitrep_ambo %>%
-    dplyr::slice(-c(2)) %>%   # skip blank line
+    dplyr::slice(-c(3)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("Delay >"))
 
   # convert to long format
