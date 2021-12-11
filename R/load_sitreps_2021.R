@@ -44,6 +44,12 @@ load_sitreps_2021 = function(sitrep_url) {
   sitrep_dates$Occupancy = c("Occupancy rate",
                              paste("Occupancy rate", seq(1:num_cols), sep="__"))
 
+  sitrep_dates$Occupancy_open = c("Total Beds Open",
+                                  paste("Total Beds Open", seq(1:num_cols), sep="__"))
+
+  sitrep_dates$Occupancy_occ = c("Total beds occ'd",
+                                 paste("Total beds occ'd", seq(1:num_cols), sep="__"))
+
   # - Dates for long-stay patients and diverts started later -
   sitrep_dates_long = readxl::read_excel(tmp_sitrep, sheet = "Beds Occ by long stay patients", skip = 12, n_max = 1) %>%
     janitor::remove_empty("cols")
@@ -71,6 +77,12 @@ load_sitreps_2021 = function(sitrep_url) {
   sitrep_dates = sitrep_dates %>%
     dplyr::left_join(sitrep_dates_long, by = "Date")
 
+  # Convert to long format for joining with bed occupancy data in the next section
+  sitrep_dates_long = sitrep_dates %>%
+    tidyr::pivot_longer(cols = -Date) %>%
+    dplyr::select(-name) %>%
+    na.omit()
+
 
   ######################################################################################################
   ## Bed occupancy
@@ -78,39 +90,58 @@ load_sitreps_2021 = function(sitrep_url) {
   sitrep_beds = sitrep_beds %>%
     dplyr::slice(-c(3)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("Total beds")) %>%   # keep only bed occupancy rates
-    janitor::remove_empty("rows")
+    janitor::remove_empty("rows") %>%
+    dplyr::mutate(dplyr::across(-c(Code, Name), as.integer))
 
   # calculate bed occupancy rates for each pair of "Total beds available/occupied" columns
   #... do the first pair manually
-  sitrep_beds$`Occupancy rate` = as.numeric(sitrep_beds$`Total beds occ'd`) / as.numeric(sitrep_beds$`Total Beds Open`)
+  # sitrep_beds$`Occupancy rate` = as.numeric(sitrep_beds$`Total beds occ'd`) / as.numeric(sitrep_beds$`Total Beds Open`)
 
   #... now loop over the rest of the columns, calculating occupancy rates
-  num_cols = length( names(sitrep_beds)[ grep("Total beds occ'd", names(sitrep_beds)) ] ) - 1  # how many time series columns are there?
+  # num_cols = length( names(sitrep_beds)[ grep("Total beds occ'd", names(sitrep_beds)) ] ) - 1  # how many time series columns are there?
 
-  for (i in 1:num_cols) {
-    # get current pair of available/occupied columns
-    tmp_cols = sitrep_beds[, grep( paste0("TOTAL BEDS.*__", i, "$"), toupper(colnames(sitrep_beds))) ]
-    # calculate occupancy rate (needs unlist() otherwise as.numeric() doesn't work)
-    sitrep_beds$rate_tmp = as.numeric(unlist(tmp_cols[,2])) /  as.numeric(unlist(tmp_cols[,1]))
-    # rename column to include "__i"
-    names(sitrep_beds)[ names(sitrep_beds) == "rate_tmp" ] = paste0("Occupancy rate__", i)
-  }
+  # for (i in 1:num_cols) {
+  #   # get current pair of available/occupied columns
+  #   tmp_cols = sitrep_beds[, grep( paste0("TOTAL BEDS.*__", i, "$"), toupper(colnames(sitrep_beds))) ]
+  #   # calculate occupancy rate (needs unlist() otherwise as.numeric() doesn't work)
+  #   sitrep_beds$rate_tmp = as.numeric(unlist(tmp_cols[,2])) /  as.numeric(unlist(tmp_cols[,1]))
+  #   # rename column to include "__i"
+  #   names(sitrep_beds)[ names(sitrep_beds) == "rate_tmp" ] = paste0("Occupancy rate__", i)
+  # }
 
   # keep only new occupancy rate columns
-  sitrep_beds = sitrep_beds %>%
-    dplyr::select(Code, Name, dplyr::starts_with("Occupancy rate"))
+  # sitrep_beds = sitrep_beds %>%
+  #   dplyr::select(Code, Name, dplyr::starts_with("Occupancy rate"))
 
   # convert to long format
   sitrep_beds = sitrep_beds %>%
     tidyr::gather(Occupancy, `Occupancy rate`, -Code, -Name) %>%
-    dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Occupancy), by = "Occupancy")  # merge in dates that correspond to column names
+    dplyr::left_join(sitrep_dates_long, by = c("Occupancy" = "value"))
+    # dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Occupancy), by = "Occupancy")  # merge in dates that correspond to column names
+
+  # Elongate data so there are columsn for G&A beds open and occupied
+  sitrep_beds = sitrep_beds %>%
+    dplyr::mutate(Occupancy = stringr::str_remove(Occupancy, "__[0-9]+")) %>%
+    tidyr::pivot_wider(names_from = Occupancy, values_from = `Occupancy rate`)
+
+  sitrep_beds = sitrep_beds %>%
+    dplyr::rename(
+      `G&A beds occ'd` = `Total beds occ'd`,
+      `G&A Beds Open` = `Total Beds Open`
+    )
+
+  # Calculate occupancy rates
+  sitrep_beds = sitrep_beds %>%
+    dplyr::mutate(`Occupancy rate` = `G&A beds occ'd` / `G&A Beds Open`)
 
   # variable conversions
   sitrep_beds = sitrep_beds %>%
-    dplyr::select(-Occupancy) %>%
-    dplyr::mutate(`Occupancy rate` = dplyr::na_if(`Occupancy rate`, "-")) %>%
-    dplyr::mutate(`Occupancy rate` = as.numeric(`Occupancy rate`),
-                  Date = as.POSIXct(Date))
+    # dplyr::select(-Occupancy) %>%
+    # dplyr::mutate(`Occupancy rate` = dplyr::na_if(`Occupancy rate`, "-")) %>%
+    dplyr::mutate(
+      # `Occupancy rate` = as.numeric(`Occupancy rate`),
+      Date = as.POSIXct(Date)
+    )
 
 
   #########################################################################################
