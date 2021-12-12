@@ -356,7 +356,7 @@ load_sitreps_generic = function(sitrep_url,
   sitrep = sitrep_trusts %>%
     dplyr::left_join(sitrep_ambo30           %>% dplyr::select(Code, Date, Delays30 = Delays),                                      by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_ambo60           %>% dplyr::select(Code, Date, Delays60 = Delays),                                      by = c("Code", "Date")) %>%
-    dplyr::left_join(sitrep_beds             %>% dplyr::select(Code, Date, `Occupancy rate`),                                       by = c("Code", "Date")) %>%
+    dplyr::left_join(sitrep_beds             %>% dplyr::select(-Name),                                                              by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_critical         %>% dplyr::select(Code, Date, `Critical care beds occupancy rate`),                    by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed      %>% dplyr::select(Code, Date, `No. beds closed due to norovirus etc.`),                by = c("Code", "Date")) %>%
     dplyr::left_join(sitrep_beds_closed_unoc %>% dplyr::select(Code, Date, `No. unoccupied beds closed due to norovirus etc.`),     by = c("Code", "Date")) %>%
