@@ -53,6 +53,12 @@ load_sitreps_generic = function(sitrep_url,
   sitrep_dates$Occupancy = c("Occupancy rate",
                              paste("Occupancy rate", seq(1:num_cols), sep="__"))
 
+  sitrep_dates$Occupancy_open = c("Total Beds Open",
+                                  paste("Total Beds Open", seq(1:num_cols), sep="__"))
+
+  sitrep_dates$Occupancy_occ = c("Total beds occ'd",
+                                 paste("Total beds occ'd", seq(1:num_cols), sep="__"))
+
   sitrep_dates$LongStay = c("> 21 days",
                             paste("> 21 days", seq(1:num_cols), sep="__"))
 
@@ -71,26 +77,46 @@ load_sitreps_generic = function(sitrep_url,
   sitrep_dates$Ambo60 = c("Delay >60 mins",
                           paste("Delay >60 mins", seq(1:num_cols), sep="__"))
 
+  # Convert to long format for joining with bed occupancy data in the next section
+  sitrep_dates_long = sitrep_dates %>%
+    tidyr::pivot_longer(cols = -Date) %>%
+    dplyr::select(-name)
+
 
   ######################################################################################################
   ## Bed occupancy
   ##
   sitrep_beds = sitrep_beds %>%
     dplyr::slice(-c(2)) %>%   # skip blank line
-    dplyr::select(Code, Name, dplyr::starts_with("Occupancy rate")) %>%   # keep only bed occupancy rates
-    janitor::remove_empty("rows")
+    dplyr::select(Code, Name, dplyr::starts_with("Total"), dplyr::starts_with("Occupancy rate")) %>%   # keep only bed occupancy rates
+    janitor::remove_empty("rows") %>%
+    dplyr::mutate(dplyr::across(-c(Code, Name), as.integer))
 
   # convert to long format
   sitrep_beds = sitrep_beds %>%
     tidyr::gather(Occupancy, `Occupancy rate`, -Code, -Name) %>%
-    dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Occupancy), by = "Occupancy")  # merge in dates that correspond to column names
+    dplyr::left_join(sitrep_dates_long, by = c("Occupancy" = "value"))
+    # dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Occupancy), by = "Occupancy")  # merge in dates that correspond to column names
+
+  # Elongate data so there are columsn for G&A beds open and occupied
+  sitrep_beds = sitrep_beds %>%
+    dplyr::mutate(Occupancy = stringr::str_remove(Occupancy, "__[0-9]+")) %>%
+    tidyr::pivot_wider(names_from = Occupancy, values_from = `Occupancy rate`)
+
+  sitrep_beds = sitrep_beds %>%
+    dplyr::rename(
+      `G&A beds occ'd` = `Total beds occ'd`,
+      `G&A Beds Open` = `Total Beds Open`
+    )
 
   # variable conversions
   sitrep_beds = sitrep_beds %>%
-    dplyr::select(-Occupancy) %>%
-    dplyr::mutate(`Occupancy rate` = dplyr::na_if(`Occupancy rate`, "-")) %>%
-    dplyr::mutate(`Occupancy rate` = as.numeric(`Occupancy rate`),
-                  Date = as.POSIXct(Date))
+    # dplyr::select(-Occupancy) %>%
+    # dplyr::mutate(`Occupancy rate` = dplyr::na_if(`Occupancy rate`, "-")) %>%
+    dplyr::mutate(
+      # `Occupancy rate` = as.numeric(`Occupancy rate`),
+      Date = as.POSIXct(Date)
+    )
 
 
   #########################################################################################
