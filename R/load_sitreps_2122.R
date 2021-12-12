@@ -389,6 +389,18 @@ load_sitreps_2122 = function(sitrep_url) {
   ######################################################################################################
   ## Combine sitreps into one dataframe
   ##
+  sitrep_trusts = dplyr::bind_rows(
+    sitrep_beds        %>% dplyr::select(Code, Name, Date),
+    sitrep_critical    %>% dplyr::select(Code, Name, Date),
+    sitrep_closures    %>% dplyr::select(Code, Name, Date),
+    sitrep_diverts     %>% dplyr::select(Code, Name, Date),
+    sitrep_beds_long_7 %>% dplyr::select(Code, Name, Date),
+    sitrep_ambo30      %>% dplyr::select(Code, Name, Date),
+    sitrep_flu_GA      %>% dplyr::select(Code, Name, Date)
+  ) %>%
+    dplyr::distinct() %>%
+    na.omit()
+
   sitrep_ambo30 = na.omit(sitrep_ambo30)
   sitrep_ambo60 = na.omit(sitrep_ambo60)
   sitrep_beds = na.omit(sitrep_beds)
@@ -400,7 +412,8 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_closures = na.omit(sitrep_closures)
   sitrep_diverts = na.omit(sitrep_diverts)
 
-  sitrep = sitrep_beds %>%
+  sitrep = sitrep_trusts %>%
+    dplyr::left_join(sitrep_beds, by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_ambo30       %>% dplyr::select(Code, Name, Date, Delays30 = Delays), by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_ambo60       %>% dplyr::select(Code, Name, Date, Delays60 = Delays), by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_critical     %>% dplyr::select(Code, Name, Date, `Critical care beds occupancy rate`), by = c("Code", "Name", "Date")) %>%
