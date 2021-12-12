@@ -124,8 +124,7 @@ load_sitreps_generic = function(sitrep_url,
   ##
   # tidy up data
   sitrep_critical = sitrep_critical %>%
-    dplyr::slice(-c(3))   # skip blank line
-
+    dplyr::slice(-c(2))   # skip blank line
 
   if (length( names(sitrep_critical)[ grep("Occupancy", names(sitrep_critical)) ] ) > 0) {
     sitrep_critical = sitrep_critical %>%
