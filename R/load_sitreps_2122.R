@@ -55,6 +55,12 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_dates$Occupancy_paeds_occ = c("Paeds G&A beds occ'd",
                                        paste("Paeds G&A beds occ'd", seq(1:num_cols), sep="__"))
 
+  sitrep_dates$Occupancy_critical_open = c("CC Adult Open",
+                                           paste("CC Adult Open", seq(1:num_cols), sep="__"))
+
+  sitrep_dates$Occupancy_critical_occ = c("CC Adult Occ",
+                                          paste("CC Adult Occ", seq(1:num_cols), sep="__"))
+
   sitrep_dates$Occupancy = c("Occupancy rate",
                              paste("Occupancy rate", seq(1:num_cols), sep="__"))
 
@@ -174,7 +180,7 @@ load_sitreps_2122 = function(sitrep_url) {
     dplyr::summarise(`Occupancy rate` = sum(`Occupancy rate`, na.rm = TRUE)) %>%
     dplyr::ungroup()
 
-  # Elongate data so there are columsn for G&A beds open and occupied
+  # Elongate data so there are columns for G&A beds open and occupied
   sitrep_beds = sitrep_beds %>%
     dplyr::mutate(Occupancy = stringr::str_remove(Occupancy, "__[0-9]+")) %>%
     tidyr::pivot_wider(names_from = Occupancy, values_from = `Occupancy rate`)
@@ -200,40 +206,47 @@ load_sitreps_2122 = function(sitrep_url) {
   sitrep_critical = sitrep_critical %>%
     dplyr::slice(-c(3)) %>%   # skip blank line
     dplyr::select(Code, Name, dplyr::starts_with("CC")) %>%   # keep only bed occupancy rates
-    janitor::remove_empty("rows")
+    janitor::remove_empty("rows") %>%
+    dplyr::mutate(dplyr::across(-c(Code, Name), as.integer))
 
   # calculate bed occupancy rates for each pair of "Total beds available/occupied" columns
   #... do the first pair manually
-  sitrep_critical$`Occupancy rate` = as.numeric(sitrep_critical$`CC Adult Occ`) / as.numeric(sitrep_critical$`CC Adult Open`)
+  # sitrep_critical$`Occupancy rate` = as.numeric(sitrep_critical$`CC Adult Occ`) / as.numeric(sitrep_critical$`CC Adult Open`)
 
   #... now loop over the rest of the columns, calculating occupancy rates
-  num_cols = length( names(sitrep_critical)[ grep("CC Adult Occ", names(sitrep_critical)) ] ) - 1  # how many time series columns are there?
+  # num_cols = length( names(sitrep_critical)[ grep("CC Adult Occ", names(sitrep_critical)) ] ) - 1  # how many time series columns are there?
 
-  for (i in 1:num_cols) {
-    # get current pair of available/occupied columns
-    tmp_cols = sitrep_critical[, grep( paste0("CC Adult.*__", i, "$"), colnames(sitrep_critical)) ]
-    # calculate occupancy rate (needs unlist() otherwise as.numeric() doesn't work)
-    sitrep_critical$rate_tmp = as.numeric(unlist(tmp_cols[,2])) /  as.numeric(unlist(tmp_cols[,1]))
-    # rename column to include "__i"
-    names(sitrep_critical)[ names(sitrep_critical) == "rate_tmp" ] = paste0("Occupancy rate__", i)
-  }
+  # for (i in 1:num_cols) {
+  #   # get current pair of available/occupied columns
+  #   tmp_cols = sitrep_critical[, grep( paste0("CC Adult.*__", i, "$"), colnames(sitrep_critical)) ]
+  #   # calculate occupancy rate (needs unlist() otherwise as.numeric() doesn't work)
+  #   sitrep_critical$rate_tmp = as.numeric(unlist(tmp_cols[,2])) /  as.numeric(unlist(tmp_cols[,1]))
+  #   # rename column to include "__i"
+  #   names(sitrep_critical)[ names(sitrep_critical) == "rate_tmp" ] = paste0("Occupancy rate__", i)
+  # }
 
   # keep only new occupancy rate columns
-  sitrep_critical = sitrep_critical %>%
-    dplyr::select(Code, Name, dplyr::starts_with("Occupancy rate"))
+  # sitrep_critical = sitrep_critical %>%
+  #   dplyr::select(Code, Name, dplyr::starts_with("Occupancy rate"))
 
   # convert to long format
   sitrep_critical = sitrep_critical %>%
     tidyr::gather(Occupancy, `Occupancy rate`, -Code, -Name) %>%
-    dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Occupancy), by = "Occupancy")  # merge in dates that correspond to column names
+    dplyr::left_join(sitrep_dates_long, by = c("Occupancy" = "value"))
+    # dplyr::left_join(sitrep_dates %>% dplyr::select(Date, Occupancy), by = "Occupancy")  # merge in dates that correspond to column names
+
+  # Elongate data so there are columns for G&A beds open and occupied
+  sitrep_critical = sitrep_critical %>%
+    dplyr::mutate(Occupancy = stringr::str_remove(Occupancy, "__[0-9]+")) %>%
+    tidyr::pivot_wider(names_from = Occupancy, values_from = `Occupancy rate`)
+
+  # Calculate occupancy rates
+  sitrep_critical = sitrep_critical %>%
+    dplyr::mutate(`Critical care beds occupancy rate` = `CC Adult Occ` / `CC Adult Open`)
 
   # variable conversions
   sitrep_critical = sitrep_critical %>%
-    dplyr::select(-Occupancy) %>%
-    dplyr::mutate(`Occupancy rate` = dplyr::na_if(`Occupancy rate`, "-")) %>%
-    dplyr::mutate(`Occupancy rate` = as.numeric(`Occupancy rate`),
-                  Date = as.POSIXct(Date)) %>%
-    dplyr::rename(`Critical care beds occupancy rate` = `Occupancy rate`)
+    dplyr::mutate(Date = as.POSIXct(Date))
 
 
   ######################################################################################################
@@ -416,7 +429,7 @@ load_sitreps_2122 = function(sitrep_url) {
     dplyr::left_join(sitrep_beds, by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_ambo30       %>% dplyr::select(Code, Name, Date, Delays30 = Delays), by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_ambo60       %>% dplyr::select(Code, Name, Date, Delays60 = Delays), by = c("Code", "Name", "Date")) %>%
-    dplyr::left_join(sitrep_critical     %>% dplyr::select(Code, Name, Date, `Critical care beds occupancy rate`), by = c("Code", "Name", "Date")) %>%
+    dplyr::left_join(sitrep_critical, by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_beds_long_7  %>% dplyr::select(Code, Name, Date, `No. beds occupied by long-stay patients (> 7 days)`),  by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_beds_long_21 %>% dplyr::select(Code, Name, Date, `No. beds occupied by long-stay patients (> 21 days)`),  by = c("Code", "Name", "Date")) %>%
     dplyr::left_join(sitrep_flu_GA       %>% dplyr::select(Code, Name, Date, `No. beds occupied by flu patients (G&A)`),  by = c("Code", "Name", "Date")) %>%
