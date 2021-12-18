@@ -62,6 +62,9 @@ load_sitreps_generic = function(sitrep_url,
   sitrep_dates$Occupancy_critical_open = c("CC Adult Open",
                                            paste("CC Adult Open", seq(1:num_cols), sep="__"))
 
+  sitrep_dates$Occupancy_critical_avail = c("CC Adult avail",
+                                            paste("CC Adult avail", seq(1:num_cols), sep="__"))
+
   sitrep_dates$Occupancy_critical_occ = c("CC Adult Occ",
                                           paste("CC Adult Occ", seq(1:num_cols), sep="__"))
 
@@ -135,6 +138,11 @@ load_sitreps_generic = function(sitrep_url,
     janitor::remove_empty("rows") %>%
     dplyr::mutate(dplyr::across(-c(Code, Name), as.numeric))
 
+  # Year 2017-18 has a mix of "CC Open..." and "CC avail..." column names - make them all "CC avail..."
+  if (length( names(sitrep_critical)[ grep("Open", names(sitrep_critical)) ] ) > 0 & length( names(sitrep_critical)[ grep("avail", names(sitrep_critical)) ] ) > 0) {
+    names(sitrep_critical)[grep("Open", names(sitrep_critical))] = sapply(21:num_cols, function(x) paste0("CC Adult avail__", x))
+  }
+
   # if (length( names(sitrep_critical)[ grep("Occupancy", names(sitrep_critical)) ] ) > 0) {
   #   sitrep_critical = sitrep_critical %>%
   #     dplyr::select(-`NHS England Region`, -V__1) %>%
@@ -178,6 +186,9 @@ load_sitreps_generic = function(sitrep_url,
   sitrep_critical = sitrep_critical %>%
     dplyr::mutate(Occupancy = stringr::str_remove(Occupancy, "__[0-9]+")) %>%
     tidyr::pivot_wider(names_from = Occupancy, values_from = `Occupancy rate`)
+
+  # Rename avail to Open if it's in this dataframe
+  names(sitrep_critical)[names(sitrep_critical) == "CC Adult avail"] = "CC Adult Open"
 
   # Calculate occupancy rates
   sitrep_critical = sitrep_critical %>%
