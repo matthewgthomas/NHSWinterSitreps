@@ -5,8 +5,8 @@
 \title{Load timeseries of winter situation reports from 2014-15}
 \usage{
 load_sitreps_1415(
- 
-    sitrep_url = "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2014/12/DailySR-Timeseries-WE-29.03.15.xlsx"
+  sitrep_url =
+    "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2014/12/DailySR-Timeseries-WE-29.03.15.xlsx"
 )
 }
 \arguments{
