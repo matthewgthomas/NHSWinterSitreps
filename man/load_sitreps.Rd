@@ -7,7 +7,7 @@
 load_sitreps(winter)
 }
 \arguments{
-\item{winter}{The winter you want to fetch data for (can be "2020-21", "2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14", "2012-13")}
+\item{winter}{The winter you want to fetch data for (can be "2022-23", "2021-22 ,"2020-21", "2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14", "2012-13")}
 }
 \description{
 Load timeseries of winter situation reports from the specified winter

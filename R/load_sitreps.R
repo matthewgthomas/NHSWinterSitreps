@@ -1,18 +1,25 @@
 #' Load timeseries of winter situation reports from the specified winter
-#' @param winter The winter you want to fetch data for (can be "2021-22 ,"2020-21", "2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14", "2012-13")
+#' @param winter The winter you want to fetch data for (can be "2022-23", "2021-22 ,"2020-21", "2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14", "2012-13")
 #' @examples
 #' sitrep_1819 = load_sitreps("2018-19")
 #' @export
 load_sitreps = function(winter) {
 
   if (missing(winter)) stop("You must specify a winter")
-  if (!winter %in% c("2021-22", "2020-21", "2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14", "2012-13")) stop("`winter` must be one of '2021-22', '2020-21', '2019-20', '2018-19', '2017-18', '2016-17', '2015-16', '2014-15', '2013-14', '2012-13'")
+  if (!winter %in% c("2022-23", "2021-22", "2020-21", "2019-20", "2018-19", "2017-18", "2016-17", "2015-16", "2014-15", "2013-14", "2012-13")) stop("`winter` must be one of '2021-22', '2020-21', '2019-20', '2018-19', '2017-18', '2016-17', '2015-16', '2014-15', '2013-14', '2012-13'")
 
   sitrep = tibble::tibble()
 
-  if (winter == "2021-22") {
+  if (winter == "2022-23") {
+    # "Urgent and Emergency Care Daily Situation Reports 2022-23" data from https://www.england.nhs.uk/statistics/statistical-work-areas/uec-sitrep/urgent-and-emergency-care-daily-situation-reports-2022-23/
+    sitrep = load_sitreps_2223(
+      "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2022/12/UEC-Daily-SitRep-Web-File-Timeseries.xlsx",
+      "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2022/12/Ambulance-Collection-Web-File-Timeseries.xlsx"
+    )
+
+  } else if (winter == "2021-22") {
     # "Urgent and Emergency Care Daily Situation Reports 2021-22" data from https://www.england.nhs.uk/statistics/statistical-work-areas/uec-sitrep/urgent-and-emergency-care-daily-situation-reports-2021-22/
-    sitrep = load_sitreps_2122("https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2022/01/UEC-Daily-SitRep-Web-File-Timeseries.xlsx")
+    sitrep = load_sitreps_2122("https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2022/04/UEC-Daily-SitRep-Web-File-Timeseries.xlsx")
 
   } else if (winter == "2020-21") {
     # "Urgent and Emergency Care Daily Situation Reports 2020-21" data from https://www.england.nhs.uk/statistics/statistical-work-areas/uec-sitrep/urgent-and-emergency-care-daily-situation-reports-2020-21/
