@@ -1,6 +1,6 @@
 #' Winter sitrep for 2022-23
 #'
-#' @format A data frame with 2,604 rows and 19 variables
+#' @format A data frame with 6,580 rows and 19 variables
 #' @source \url{https://www.england.nhs.uk/}
 "sitrep2223"
 
