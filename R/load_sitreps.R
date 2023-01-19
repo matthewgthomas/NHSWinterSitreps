@@ -13,8 +13,8 @@ load_sitreps = function(winter) {
   if (winter == "2022-23") {
     # "Urgent and Emergency Care Daily Situation Reports 2022-23" data from https://www.england.nhs.uk/statistics/statistical-work-areas/uec-sitrep/urgent-and-emergency-care-daily-situation-reports-2022-23/
     sitrep = load_sitreps_2223(
-      "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2023/01/UEC-Daily-SitRep-Web-File-Timeseries.xlsx",
-      "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2023/01/Ambulance-Collection-Web-File-Timeseries.xlsx"
+      "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2023/01/UEC-Daily-SitRep-Web-File-Timeseries-2.xlsx",
+      "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2023/01/Ambulance-Collection-Web-File-Timeseries-2.xlsx"
     )
 
   } else if (winter == "2021-22") {
