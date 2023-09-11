@@ -1,3 +1,6 @@
+#' @importFrom tibble tibble
+NULL
+
 #' Winter sitrep for 2022-23
 #'
 #' @format A data frame with 18,445 rows and 19 variables
