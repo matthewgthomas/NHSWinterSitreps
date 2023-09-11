@@ -3,3 +3,4 @@
 export(load_sitreps)
 export(load_trusts)
 importFrom(magrittr,"%>%")
+importFrom(tibble,tibble)
